@@ -40,7 +40,7 @@ class Script(scripts.Script):
 # The returned values are passed to the run method as parameters.
 
     def ui(self, is_img2img):
-        upscale_method = gr.Dropdown(["nearest", "bicubic", "area", "lanczos", "bilinear"], label="Upscale method")
+        upscale_method = gr.Dropdown(["nearest", "nearest", "linear", "bilinear", "bicubic", "trilinear", "area", "nearest-exact"], label="Upscale method")
         return [upscale_method]
 
 

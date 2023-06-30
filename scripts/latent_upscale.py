@@ -56,6 +56,7 @@ class Script(scripts.Script):
         # Do the same procedures as defined in StableDiffusionProcessingImg2Img's __init__
         # to get the init_latent
         image_mask = p.image_mask
+        crop_region = None
 
         if image_mask is not None:
             image_mask = image_mask.convert('L')

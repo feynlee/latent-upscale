@@ -153,7 +153,7 @@ class Script(scripts.Script):
         image = 2. * image - 1.
         image = image.to(shared.device)
 
-        self.init_latent = self.sd_model.get_first_stage_encoding(self.sd_model.encode_first_stage(image))
+        p.init_latent = p.sd_model.get_first_stage_encoding(p.sd_model.encode_first_stage(image))
 
 
         # Upscale the latent space to the desired resolution with options to choose the method

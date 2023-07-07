@@ -159,6 +159,8 @@ class Script(scripts.Script):
         # Upscale the latent space to the desired resolution with options to choose the method
         p.init_latent = torch.nn.functional.interpolate(p.init_latent, size=(p.height // opt_f, p.width // opt_f), mode=upscale_method)
 
+        p.image_conditioning = p.img2img_image_conditioning(image, p.init_latent, image_mask)
+
         # Process the Images
         proc = process_images(p)
 

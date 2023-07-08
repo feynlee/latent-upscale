@@ -57,6 +57,7 @@ class Script(scripts.Script):
         print(f"set Upscale method in run: {upscale_method}")
 
     def process_batch(p, **kwargs):
+        print("Entered script.process_batch")
         # Do the same procedures as defined in StableDiffusionProcessingImg2Img's __init__
         # to get the init_latent
         p.sampler = sd_samplers.create_sampler(p.sampler_name, p.sd_model)

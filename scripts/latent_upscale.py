@@ -8,7 +8,7 @@ import os
 import hashlib
 
 from PIL import Image, ImageOps
-from modules import images, masking
+from modules import images, masking, sd_samplers
 from modules.processing import process_images, Processed, setup_color_correction, apply_color_correction
 from modules.shared import opts, cmd_opts, state
 
@@ -53,8 +53,12 @@ class Script(scripts.Script):
 # what is returned by the process_images method.
 
     def run(self, p, upscale_method):
+        p.upscale_method = upscale_method
+
+    def process_batch(p, **kwargs):
         # Do the same procedures as defined in StableDiffusionProcessingImg2Img's __init__
         # to get the init_latent
+        p.sampler = sd_samplers.create_sampler(p.sampler_name, p.sd_model)
         image_mask = p.image_mask
         crop_region = None
 
@@ -157,11 +161,6 @@ class Script(scripts.Script):
 
 
         # Upscale the latent space to the desired resolution with options to choose the method
-        p.init_latent = torch.nn.functional.interpolate(p.init_latent, size=(p.height // opt_f, p.width // opt_f), mode=upscale_method)
+        p.init_latent = torch.nn.functional.interpolate(p.init_latent, size=(p.height // opt_f, p.width // opt_f), mode=p.upscale_method)
 
         p.image_conditioning = p.img2img_image_conditioning(image, p.init_latent, image_mask)
-
-        # Process the Images
-        proc = process_images(p)
-
-        return proc

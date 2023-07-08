@@ -164,3 +164,5 @@ class Script(scripts.Script):
         p.init_latent = torch.nn.functional.interpolate(p.init_latent, size=(p.height // opt_f, p.width // opt_f), mode=p.upscale_method)
 
         p.image_conditioning = p.img2img_image_conditioning(image, p.init_latent, image_mask)
+
+        print(f"latent upscale with {p.upscale_method} done")

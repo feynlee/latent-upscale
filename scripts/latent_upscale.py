@@ -32,7 +32,8 @@ class Script(scripts.Script):
 
     def show(self, is_img2img):
 
-        return is_img2img
+        # return is_img2img
+        return scripts.AlwaysVisible
 
 # How the script's is displayed in the UI. See https://gradio.app/docs/#components
 # for the different UI components you can use and how to create them.
@@ -55,6 +56,8 @@ class Script(scripts.Script):
     def run(self, p, upscale_method):
         p.upscale_method = upscale_method
         print(f"set Upscale method in run: {upscale_method}")
+        print(f"p.scripts is None: {p.scripts is None}")
+        print(p.alwayson_scripts)
 
     def process_batch(p, **kwargs):
         print("Entered script.process_batch")

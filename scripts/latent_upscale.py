@@ -54,6 +54,7 @@ class Script(scripts.Script):
 
     def run(self, p, upscale_method):
         p.upscale_method = upscale_method
+        print(f"set Upscale method in run: {upscale_method}")
 
     def process_batch(p, **kwargs):
         # Do the same procedures as defined in StableDiffusionProcessingImg2Img's __init__

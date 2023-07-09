@@ -63,7 +63,7 @@ class Script(scripts.Script):
         print("always on scripts:")
         print(p.scripts.alwayson_scripts)
 
-    def process_batch(p, **kwargs):
+    def process_batch(p, *args, **kwargs):
         print("Entered script.process_batch")
         # Do the same procedures as defined in StableDiffusionProcessingImg2Img's __init__
         # to get the init_latent

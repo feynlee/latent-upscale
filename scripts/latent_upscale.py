@@ -57,7 +57,11 @@ class Script(scripts.Script):
         p.upscale_method = upscale_method
         print(f"set Upscale method in run: {upscale_method}")
         print(f"p.scripts is None: {p.scripts is None}")
-        print(p.alwayson_scripts)
+        print("always on scripts:")
+        print(p.scripts.always_on_scripts)
+        p.scripts.always_on_scripts += p.scripts.selectable_scripts
+        print("always on scripts:")
+        print(p.scripts.always_on_scripts)
 
     def process_batch(p, **kwargs):
         print("Entered script.process_batch")

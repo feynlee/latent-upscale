@@ -188,6 +188,7 @@ class Script(scripts.Script):
                     p.init_latent = p.init_latent * p.mask
 
             p.image_conditioning = p.img2img_image_conditioning(image, p.init_latent, image_mask)
+            print("new init executed")
 
         p.init = init
 

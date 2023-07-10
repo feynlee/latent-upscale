@@ -69,7 +69,7 @@ class Script(scripts.Script):
         #TODO: add custom schedulers: p.sampler_noise_scheduler_override
         # set simple and normal schedulers
         # set other schedulers to opts.k_sched_type
-        def simple_scheduler(model, steps, device='cpu'):
+        def simple_scheduler(model, steps, device='cuda'):
             sigs = []
             ss = len(model.sigmas) / steps
             for x in range(steps):
@@ -128,6 +128,8 @@ class Script(scripts.Script):
                 sigmas = ddim_scheduler(model_wrap, steps)
             else:
                 print("error invalid scheduler", scheduler)
+
+            print(f"sigmas device: {sigmas.device}")
             return sigmas
 
         p.sampler_noise_scheduler_override = sampler_noise_scheduler_override

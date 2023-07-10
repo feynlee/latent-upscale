@@ -6,6 +6,7 @@ import numpy as np
 import torch
 import os
 import hashlib
+import math
 import k_diffusion.sampling
 
 from PIL import Image, ImageOps
@@ -68,13 +69,13 @@ class Script(scripts.Script):
         #TODO: add custom schedulers: p.sampler_noise_scheduler_override
         # set simple and normal schedulers
         # set other schedulers to opts.k_sched_type
-        def simple_scheduler(model, steps):
+        def simple_scheduler(model, steps, device='cpu'):
             sigs = []
             ss = len(model.sigmas) / steps
             for x in range(steps):
                 sigs += [float(model.sigmas[-(1 + int(x * ss))])]
             sigs += [0.0]
-            return torch.FloatTensor(sigs)
+            return torch.FloatTensor(sigs).to(device)
 
         def get_sigmas_karras(n, sigma_min, sigma_max, rho=7., device='cpu'):
             """Constructs the noise schedule of Karras et al. (2022)."""

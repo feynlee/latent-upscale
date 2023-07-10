@@ -44,7 +44,7 @@ class Script(scripts.Script):
 
     def ui(self, is_img2img):
         upscale_method = gr.Dropdown(["nearest", "linear", "bilinear", "bicubic", "trilinear", "area", "nearest-exact"], label="Upscale method")
-        scheduler = gr.Dropdown(["simple", "normal", "karras", "exponential", "polyexponential", "ddim"], label="Scheduler")
+        scheduler = gr.Dropdown(["simple", "normal", "karras", "exponential", "polyexponential", "ddim_uniform"], label="Scheduler")
         return [upscale_method, scheduler]
 
 
@@ -76,28 +76,6 @@ class Script(scripts.Script):
                 sigs += [float(model.sigmas[-(1 + int(x * ss))])]
             sigs += [0.0]
             return torch.FloatTensor(sigs).to(device)
-
-        def get_sigmas_karras(n, sigma_min, sigma_max, rho=7., device='cpu'):
-            """Constructs the noise schedule of Karras et al. (2022)."""
-            ramp = torch.linspace(0, 1, n, device=device)
-            min_inv_rho = sigma_min ** (1 / rho)
-            max_inv_rho = sigma_max ** (1 / rho)
-            sigmas = (max_inv_rho + ramp * (min_inv_rho - max_inv_rho)) ** rho
-            return append_zero(sigmas).to(device)
-
-
-        def get_sigmas_exponential(n, sigma_min, sigma_max, device='cpu'):
-            """Constructs an exponential noise schedule."""
-            sigmas = torch.linspace(math.log(sigma_max), math.log(sigma_min), n, device=device).exp()
-            return append_zero(sigmas)
-
-
-        def get_sigmas_polyexponential(n, sigma_min, sigma_max, rho=1., device='cpu'):
-            """Constructs an polynomial in log sigma noise schedule."""
-            ramp = torch.linspace(1, 0, n, device=device) ** rho
-            sigmas = torch.exp(ramp * (math.log(sigma_max) - math.log(sigma_min)) + math.log(sigma_min))
-            return append_zero(sigmas)
-
 
         def make_ddim_timesteps(ddim_discr_method, num_ddim_timesteps, num_ddpm_timesteps, verbose=True):
             if ddim_discr_method == 'uniform':
@@ -133,11 +111,15 @@ class Script(scripts.Script):
 
             if scheduler == "karras":
                 sigma_min, sigma_max = (0.1, 10) if opts.use_old_karras_scheduler_sigmas else (model_wrap.sigmas[0].item(), model_wrap.sigmas[-1].item())
-                sigmas = get_sigmas_karras(n=steps, sigma_min=sigma_min, sigma_max=sigma_max)
+                sigmas = k_diffusion.sampling.get_sigmas_karras(n=steps, sigma_min=sigma_min, sigma_max=sigma_max)
             elif scheduler == "exponential":
                 m_sigma_min, m_sigma_max = (model_wrap.sigmas[0].item(), model_wrap.sigmas[-1].item())
                 sigma_min, sigma_max = (0.1, 10) if opts.use_old_karras_scheduler_sigmas else (m_sigma_min, m_sigma_max)
-                sigmas = get_sigmas_exponential(n=steps, sigma_min=sigma_min, sigma_max=sigma_max)
+                sigmas = k_diffusion.sampling.get_sigmas_exponential(n=steps, sigma_min=sigma_min, sigma_max=sigma_max)
+            elif scheduler == "polyexponential":
+                m_sigma_min, m_sigma_max = (model_wrap.sigmas[0].item(), model_wrap.sigmas[-1].item())
+                sigma_min, sigma_max = (0.1, 10) if opts.use_old_karras_scheduler_sigmas else (m_sigma_min, m_sigma_max)
+                sigmas = k_diffusion.sampling.get_sigmas_polyexponential(n=steps, sigma_min=sigma_min, sigma_max=sigma_max)
             elif scheduler == "normal":
                 sigmas = model_wrap.get_sigmas(steps)
             elif scheduler == "simple":

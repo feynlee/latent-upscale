@@ -6,6 +6,7 @@ import numpy as np
 import torch
 import os
 import hashlib
+import k_diffusion.sampling
 
 from PIL import Image, ImageOps
 from modules import images, masking, sd_samplers
@@ -42,7 +43,8 @@ class Script(scripts.Script):
 
     def ui(self, is_img2img):
         upscale_method = gr.Dropdown(["nearest", "linear", "bilinear", "bicubic", "trilinear", "area", "nearest-exact"], label="Upscale method")
-        return [upscale_method]
+        scheduler = gr.Dropdown(["simple", "normal", "karras", "exponential", "polyexponential", "ddim"], label="Scheduler")
+        return [upscale_method, scheduler]
 
 
 
@@ -53,7 +55,7 @@ class Script(scripts.Script):
 # to be used in processing. The return value should be a Processed object, which is
 # what is returned by the process_images method.
 
-    def run(self, p, upscale_method):
+    def run(self, p, upscale_method, scheduler):
         p.upscale_method = upscale_method
         print(f"set Upscale method in run: {upscale_method}")
         # print(f"p.scripts is None: {p.scripts is None}")
@@ -62,6 +64,90 @@ class Script(scripts.Script):
         # p.scripts.alwayson_scripts += p.scripts.selectable_scripts
         # print("always on scripts:")
         # print(p.scripts.alwayson_scripts)
+
+        #TODO: add custom schedulers: p.sampler_noise_scheduler_override
+        # set simple and normal schedulers
+        # set other schedulers to opts.k_sched_type
+        def simple_scheduler(model, steps):
+            sigs = []
+            ss = len(model.sigmas) / steps
+            for x in range(steps):
+                sigs += [float(model.sigmas[-(1 + int(x * ss))])]
+            sigs += [0.0]
+            return torch.FloatTensor(sigs)
+
+        def get_sigmas_karras(n, sigma_min, sigma_max, rho=7., device='cpu'):
+            """Constructs the noise schedule of Karras et al. (2022)."""
+            ramp = torch.linspace(0, 1, n, device=device)
+            min_inv_rho = sigma_min ** (1 / rho)
+            max_inv_rho = sigma_max ** (1 / rho)
+            sigmas = (max_inv_rho + ramp * (min_inv_rho - max_inv_rho)) ** rho
+            return append_zero(sigmas).to(device)
+
+
+        def get_sigmas_exponential(n, sigma_min, sigma_max, device='cpu'):
+            """Constructs an exponential noise schedule."""
+            sigmas = torch.linspace(math.log(sigma_max), math.log(sigma_min), n, device=device).exp()
+            return append_zero(sigmas)
+
+
+        def get_sigmas_polyexponential(n, sigma_min, sigma_max, rho=1., device='cpu'):
+            """Constructs an polynomial in log sigma noise schedule."""
+            ramp = torch.linspace(1, 0, n, device=device) ** rho
+            sigmas = torch.exp(ramp * (math.log(sigma_max) - math.log(sigma_min)) + math.log(sigma_min))
+            return append_zero(sigmas)
+
+
+        def make_ddim_timesteps(ddim_discr_method, num_ddim_timesteps, num_ddpm_timesteps, verbose=True):
+            if ddim_discr_method == 'uniform':
+                c = num_ddpm_timesteps // num_ddim_timesteps
+                ddim_timesteps = np.asarray(list(range(0, num_ddpm_timesteps, c)))
+            elif ddim_discr_method == 'quad':
+                ddim_timesteps = ((np.linspace(0, np.sqrt(num_ddpm_timesteps * .8), num_ddim_timesteps)) ** 2).astype(int)
+            else:
+                raise NotImplementedError(f'There is no ddim discretization method called "{ddim_discr_method}"')
+
+            # assert ddim_timesteps.shape[0] == num_ddim_timesteps
+            # add one to get the final alpha values right (the ones from first scale to data during sampling)
+            steps_out = ddim_timesteps + 1
+            if verbose:
+                print(f'Selected timesteps for ddim sampler: {steps_out}')
+            return steps_out
+
+        def ddim_scheduler(model, steps):
+            sigs = []
+            ddim_timesteps = make_ddim_timesteps(ddim_discr_method="uniform", num_ddim_timesteps=steps, num_ddpm_timesteps=model.inner_model.inner_model.num_timesteps, verbose=False)
+            for x in range(len(ddim_timesteps) - 1, -1, -1):
+                ts = ddim_timesteps[x]
+                if ts > 999:
+                    ts = 999
+                sigs.append(model.t_to_sigma(torch.tensor(ts)))
+            sigs += [0.0]
+            return torch.FloatTensor(sigs)
+
+
+        def sampler_noise_scheduler_override(steps):
+            denoiser = k_diffusion.external.CompVisVDenoiser if p.sd_model.parameterization == "v" else k_diffusion.external.CompVisDenoiser
+            model_wrap = denoiser(p.sd_model, quantize=opts.enable_quantization)
+
+            if p.scheduler == "karras":
+                sigma_min, sigma_max = (0.1, 10) if opts.use_old_karras_scheduler_sigmas else (model_wrap.sigmas[0].item(), model_wrap.sigmas[-1].item())
+                sigmas = get_sigmas_karras(n=steps, sigma_min=sigma_min, sigma_max=sigma_max)
+            elif p.scheduler == "exponential":
+                m_sigma_min, m_sigma_max = (model_wrap.sigmas[0].item(), model_wrap.sigmas[-1].item())
+                sigma_min, sigma_max = (0.1, 10) if opts.use_old_karras_scheduler_sigmas else (m_sigma_min, m_sigma_max)
+                sigmas = get_sigmas_exponential(n=steps, sigma_min=sigma_min, sigma_max=sigma_max)
+            elif p.scheduler == "normal":
+                sigmas = model_wrap.get_sigmas(steps)
+            elif p.scheduler == "simple":
+                sigmas = simple_scheduler(model_wrap, steps)
+            elif p.scheduler == "ddim_uniform":
+                sigmas = ddim_scheduler(model_wrap, steps)
+            else:
+                print("error invalid scheduler", p.scheduler)
+            return sigmas
+
+        p.sampler_noise_scheduler_override = sampler_noise_scheduler_override
 
         # override the init method
         def init(all_prompts, all_seeds, all_subseeds, **kwargs):

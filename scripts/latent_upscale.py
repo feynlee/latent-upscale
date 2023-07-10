@@ -59,6 +59,7 @@ class Script(scripts.Script):
     def run(self, p, upscale_method, scheduler):
         p.upscale_method = upscale_method
         print(f"set Upscale method in run: {upscale_method}")
+        print(f"scheduler: {scheduler}")
         # print(f"p.scripts is None: {p.scripts is None}")
         # print("always on scripts:")
         # print(p.scripts.alwayson_scripts)
@@ -130,7 +131,7 @@ class Script(scripts.Script):
             print(f"sigmas device: {sigmas.device}")
             return sigmas
 
-        if scheduler is not None and scheduler != "automatic":
+        if scheduler in ["simple", "normal", "karras", "exponential", "polyexponential"]:
             p.sampler_noise_scheduler_override = sampler_noise_scheduler_override
 
         # override the init method

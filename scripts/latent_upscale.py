@@ -66,9 +66,7 @@ class Script(scripts.Script):
         # print("always on scripts:")
         # print(p.scripts.alwayson_scripts)
 
-        #TODO: add custom schedulers: p.sampler_noise_scheduler_override
-        # set simple and normal schedulers
-        # set other schedulers to opts.k_sched_type
+        # add custom schedulers: p.sampler_noise_scheduler_override
         def simple_scheduler(model, steps, device='cuda'):
             sigs = []
             ss = len(model.sigmas) / steps
@@ -93,7 +91,7 @@ class Script(scripts.Script):
                 print(f'Selected timesteps for ddim sampler: {steps_out}')
             return steps_out
 
-        def ddim_scheduler(model, steps):
+        def ddim_scheduler(model, steps, device='cuda'):
             sigs = []
             ddim_timesteps = make_ddim_timesteps(ddim_discr_method="uniform", num_ddim_timesteps=steps, num_ddpm_timesteps=model.inner_model.inner_model.num_timesteps, verbose=False)
             for x in range(len(ddim_timesteps) - 1, -1, -1):
@@ -102,7 +100,7 @@ class Script(scripts.Script):
                     ts = 999
                 sigs.append(model.t_to_sigma(torch.tensor(ts)))
             sigs += [0.0]
-            return torch.FloatTensor(sigs)
+            return torch.FloatTensor(sigs).to(device)
 
 
         def sampler_noise_scheduler_override(steps):
@@ -111,15 +109,15 @@ class Script(scripts.Script):
 
             if scheduler == "karras":
                 sigma_min, sigma_max = (0.1, 10) if opts.use_old_karras_scheduler_sigmas else (model_wrap.sigmas[0].item(), model_wrap.sigmas[-1].item())
-                sigmas = k_diffusion.sampling.get_sigmas_karras(n=steps, sigma_min=sigma_min, sigma_max=sigma_max)
+                sigmas = k_diffusion.sampling.get_sigmas_karras(n=steps, sigma_min=sigma_min, sigma_max=sigma_max, device='cuda')
             elif scheduler == "exponential":
                 m_sigma_min, m_sigma_max = (model_wrap.sigmas[0].item(), model_wrap.sigmas[-1].item())
                 sigma_min, sigma_max = (0.1, 10) if opts.use_old_karras_scheduler_sigmas else (m_sigma_min, m_sigma_max)
-                sigmas = k_diffusion.sampling.get_sigmas_exponential(n=steps, sigma_min=sigma_min, sigma_max=sigma_max)
+                sigmas = k_diffusion.sampling.get_sigmas_exponential(n=steps, sigma_min=sigma_min, sigma_max=sigma_max, device='cuda')
             elif scheduler == "polyexponential":
                 m_sigma_min, m_sigma_max = (model_wrap.sigmas[0].item(), model_wrap.sigmas[-1].item())
                 sigma_min, sigma_max = (0.1, 10) if opts.use_old_karras_scheduler_sigmas else (m_sigma_min, m_sigma_max)
-                sigmas = k_diffusion.sampling.get_sigmas_polyexponential(n=steps, sigma_min=sigma_min, sigma_max=sigma_max)
+                sigmas = k_diffusion.sampling.get_sigmas_polyexponential(n=steps, sigma_min=sigma_min, sigma_max=sigma_max, device='cuda')
             elif scheduler == "normal":
                 sigmas = model_wrap.get_sigmas(steps)
             elif scheduler == "simple":

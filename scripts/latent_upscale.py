@@ -130,21 +130,21 @@ class Script(scripts.Script):
             denoiser = k_diffusion.external.CompVisVDenoiser if p.sd_model.parameterization == "v" else k_diffusion.external.CompVisDenoiser
             model_wrap = denoiser(p.sd_model, quantize=opts.enable_quantization)
 
-            if p.scheduler == "karras":
+            if scheduler == "karras":
                 sigma_min, sigma_max = (0.1, 10) if opts.use_old_karras_scheduler_sigmas else (model_wrap.sigmas[0].item(), model_wrap.sigmas[-1].item())
                 sigmas = get_sigmas_karras(n=steps, sigma_min=sigma_min, sigma_max=sigma_max)
-            elif p.scheduler == "exponential":
+            elif scheduler == "exponential":
                 m_sigma_min, m_sigma_max = (model_wrap.sigmas[0].item(), model_wrap.sigmas[-1].item())
                 sigma_min, sigma_max = (0.1, 10) if opts.use_old_karras_scheduler_sigmas else (m_sigma_min, m_sigma_max)
                 sigmas = get_sigmas_exponential(n=steps, sigma_min=sigma_min, sigma_max=sigma_max)
-            elif p.scheduler == "normal":
+            elif scheduler == "normal":
                 sigmas = model_wrap.get_sigmas(steps)
-            elif p.scheduler == "simple":
+            elif scheduler == "simple":
                 sigmas = simple_scheduler(model_wrap, steps)
-            elif p.scheduler == "ddim_uniform":
+            elif scheduler == "ddim_uniform":
                 sigmas = ddim_scheduler(model_wrap, steps)
             else:
-                print("error invalid scheduler", p.scheduler)
+                print("error invalid scheduler", scheduler)
             return sigmas
 
         p.sampler_noise_scheduler_override = sampler_noise_scheduler_override

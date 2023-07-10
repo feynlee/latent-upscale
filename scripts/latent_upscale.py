@@ -44,7 +44,7 @@ class Script(scripts.Script):
 
     def ui(self, is_img2img):
         upscale_method = gr.Dropdown(["nearest", "linear", "bilinear", "bicubic", "trilinear", "area", "nearest-exact"], label="Upscale method")
-        scheduler = gr.Dropdown(["simple", "normal", "karras", "exponential", "polyexponential", "ddim_uniform"], label="Scheduler")
+        scheduler = gr.Dropdown(["simple", "normal", "karras", "exponential", "polyexponential", "automatic"], label="Scheduler")
         return [upscale_method, scheduler]
 
 
@@ -130,7 +130,8 @@ class Script(scripts.Script):
             print(f"sigmas device: {sigmas.device}")
             return sigmas
 
-        p.sampler_noise_scheduler_override = sampler_noise_scheduler_override
+        if scheduler is not None and scheduler != "automatic":
+            p.sampler_noise_scheduler_override = sampler_noise_scheduler_override
 
         # override the init method
         def init(all_prompts, all_seeds, all_subseeds, **kwargs):

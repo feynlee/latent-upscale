@@ -178,6 +178,9 @@ class KDiffusionSampler:
 
         sigma_sched = sigmas[steps - t_enc - 1:]
         xi = x + noise * sigma_sched[0]
+        print(f"steps: {steps}, t_enc: {t_enc}")
+        print(f"sigma_sched: {sigma_sched}")
+        print(f"sigmas: {sigmas}")
         # xi = x + noise * sigmas[0]
 
         extra_params_kwargs = self.initialize(p)
@@ -210,7 +213,7 @@ class KDiffusionSampler:
         }
 
         print("use custom KSampler")
-        samples = self.launch_sampling(t_enc + 1, lambda: self.func(self.model_wrap_cfg, xi, extra_args=extra_args, disable=False, callback=self.callback_state, **extra_params_kwargs))
+        samples = self.launch_sampling(t_enc + 1, lambda: self.func(self.model_wrap_cfg, xi, sigmas, extra_args=extra_args, disable=False, callback=self.callback_state, **extra_params_kwargs))
 
         if self.model_wrap_cfg.padded_cond_uncond:
             p.extra_generation_params["Pad conds"] = True

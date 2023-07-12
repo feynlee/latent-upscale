@@ -177,8 +177,8 @@ class KDiffusionSampler:
         sigmas = self.get_sigmas(p, steps)
 
         sigma_sched = sigmas[steps - t_enc - 1:]
-        # xi = x + noise * sigma_sched[0]
-        xi = x + noise * sigmas[0]
+        xi = x + noise * sigma_sched[0]
+        # xi = x + noise * sigmas[0]
 
         extra_params_kwargs = self.initialize(p)
         parameters = inspect.signature(self.func).parameters

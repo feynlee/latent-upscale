@@ -13,6 +13,7 @@ from PIL import Image, ImageOps
 from modules import images, masking, sd_samplers_common
 from modules.processing import setup_color_correction, create_random_tensors
 from modules.shared import opts, state
+from modules.sd_samplers import find_sampler_config
 from modules.sd_samplers_kdiffusion import CFGDenoiser, TorchHijack, sampler_extra_params, k_diffusion_scheduler
 
 
@@ -375,6 +376,7 @@ class Script(scripts.Script):
         def init(all_prompts, all_seeds, all_subseeds, **kwargs):
             # p.sampler = sd_samplers.create_sampler(p.sampler_name, p.sd_model)
             p.sampler = KDiffusionSampler(samplers_k_diffusion_dict[p.sampler_name], p.sd_model)
+            p.sampler.config = find_sampler_config(p.sampler_name)
 
             crop_region = None
 

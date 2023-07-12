@@ -13,6 +13,7 @@ from PIL import Image, ImageOps
 from modules import images, masking, sd_samplers
 from modules.processing import process_images, Processed, setup_color_correction, apply_color_correction, create_random_tensors
 from modules.shared import opts, cmd_opts, state
+from custom_sampler import KDiffusionSampler, samplers_k_diffusion_dict
 
 
 opt_C = 4
@@ -136,7 +137,9 @@ class Script(scripts.Script):
 
         # override the init method
         def init(all_prompts, all_seeds, all_subseeds, **kwargs):
-            p.sampler = sd_samplers.create_sampler(p.sampler_name, p.sd_model)
+            # p.sampler = sd_samplers.create_sampler(p.sampler_name, p.sd_model)
+            p.sampler = KDiffusionSampler(samplers_k_diffusion_dict[p.sampler_name], p.sd_model)
+
             crop_region = None
 
             image_mask = p.image_mask
@@ -239,7 +242,8 @@ class Script(scripts.Script):
             p.init_latent = p.sd_model.get_first_stage_encoding(p.sd_model.encode_first_stage(image))
 
             if p.resize_mode == 3:
-                p.init_latent = torch.nn.functional.interpolate(p.init_latent, size=(p.height // opt_f, p.width // opt_f), mode=p.upscale_method)
+                p.init_latent = torch.nn.functional.interpolate(p.init_latent, size=(p.height // opt_f, p.width // opt_f), mode=p.upscale_method, )
+                p.init_latent = p.init_latent.clamp(min=0, max=255)
 
             if image_mask is not None:
                 init_mask = latent_mask

@@ -13,7 +13,7 @@ from PIL import Image, ImageOps
 from modules import images, masking, sd_samplers
 from modules.processing import process_images, Processed, setup_color_correction, apply_color_correction, create_random_tensors
 from modules.shared import opts, cmd_opts, state
-from custom_sampler import KDiffusionSampler, samplers_k_diffusion_dict
+from .custom_sampler import KDiffusionSampler, samplers_k_diffusion_dict
 
 
 opt_C = 4

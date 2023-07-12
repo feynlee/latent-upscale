@@ -12,7 +12,6 @@ import modules.shared as shared
 from PIL import Image, ImageOps
 from modules import images, masking, sd_samplers_common
 from modules.processing import setup_color_correction, create_random_tensors
-from .custom_sampler import KDiffusionSampler, samplers_k_diffusion_dict
 from modules.shared import opts, state
 from modules.sd_samplers_kdiffusion import CFGDenoiser, TorchHijack, sampler_extra_params, k_diffusion_scheduler
 

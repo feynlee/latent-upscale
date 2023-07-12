@@ -481,7 +481,7 @@ class Script(scripts.Script):
 
             if p.resize_mode == 3:
                 p.init_latent = torch.nn.functional.interpolate(p.init_latent, size=(p.height // opt_f, p.width // opt_f), mode=p.upscale_method, )
-                p.init_latent = p.init_latent.clamp(min=0, max=255)
+                # p.init_latent = p.init_latent.clamp(min=0, max=1)
 
             if image_mask is not None:
                 init_mask = latent_mask

@@ -195,8 +195,8 @@ class KDiffusionSampler:
             extra_params_kwargs['n'] = len(sigma_sched) - 1
         if 'sigma_sched' in parameters:
             extra_params_kwargs['sigma_sched'] = sigma_sched
-        if 'sigmas' in parameters:
-            extra_params_kwargs['sigmas'] = sigma_sched
+        # if 'sigmas' in parameters:
+        #     extra_params_kwargs['sigmas'] = sigma_sched
 
         if self.config.options.get('brownian_noise', False):
             noise_sampler = self.create_noise_sampler(x, sigmas, p)

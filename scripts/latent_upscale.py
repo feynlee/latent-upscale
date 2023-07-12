@@ -177,7 +177,8 @@ class KDiffusionSampler:
         sigmas = self.get_sigmas(p, steps)
 
         sigma_sched = sigmas[steps - t_enc - 1:]
-        xi = x + noise * sigma_sched[0]
+        # xi = x + noise * sigma_sched[0]
+        xi = x + noise * sigmas[0]
 
         extra_params_kwargs = self.initialize(p)
         parameters = inspect.signature(self.func).parameters
@@ -374,9 +375,9 @@ class Script(scripts.Script):
 
         # override the init method
         def init(all_prompts, all_seeds, all_subseeds, **kwargs):
-            p.sampler = sd_samplers.create_sampler(p.sampler_name, p.sd_model)
-            # p.sampler = KDiffusionSampler(samplers_k_diffusion_dict[p.sampler_name], p.sd_model)
-            # p.sampler.config = find_sampler_config(p.sampler_name)
+            # p.sampler = sd_samplers.create_sampler(p.sampler_name, p.sd_model)
+            p.sampler = KDiffusionSampler(samplers_k_diffusion_dict[p.sampler_name], p.sd_model)
+            p.sampler.config = find_sampler_config(p.sampler_name)
 
             crop_region = None
 
@@ -480,7 +481,7 @@ class Script(scripts.Script):
             p.init_latent = p.sd_model.get_first_stage_encoding(p.sd_model.encode_first_stage(image))
 
             if p.resize_mode == 3:
-                p.init_latent = torch.nn.functional.interpolate(p.init_latent, size=(p.height // opt_f, p.width // opt_f), mode=p.upscale_method, )
+                p.init_latent = torch.nn.functional.interpolate(p.init_latent, size=(p.height // opt_f, p.width // opt_f), mode=p.upscale_method)
                 # p.init_latent = p.init_latent.clamp(min=0, max=1)
 
             if image_mask is not None:

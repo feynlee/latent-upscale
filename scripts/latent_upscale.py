@@ -172,8 +172,8 @@ class KDiffusionSampler:
         return BrownianTreeNoiseSampler(x, sigma_min, sigma_max, seed=current_iter_seeds)
 
     def sample_img2img(self, p, x, noise, conditioning, unconditional_conditioning, steps=None, image_conditioning=None):
-        print(f"opts.img2img2img_fix_steps: {opts.img2img2img_fix_steps}")
-        opts.img2img2img_fix_steps = True
+        print(f"opts.img2img_fix_steps: {opts.img2img_fix_steps}")
+        opts.img2img_fix_steps = True
         steps, t_enc = sd_samplers_common.setup_img2img_steps(p, steps)
         sigmas = self.get_sigmas(p, steps)
         sigma_sched = sigmas[steps - t_enc - 1:]

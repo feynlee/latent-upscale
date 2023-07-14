@@ -5,9 +5,7 @@ import gradio as gr
 import numpy as np
 import torch
 import hashlib
-import inspect
 import k_diffusion.sampling
-import modules.shared as shared
 
 from PIL import Image, ImageOps
 from modules import images, masking
@@ -30,17 +28,21 @@ def simple_scheduler(model, steps, device='cuda'):
     sigs += [0.0]
     return torch.FloatTensor(sigs).to(device)
 
-def make_ddim_timesteps(ddim_discr_method, num_ddim_timesteps, num_ddpm_timesteps, verbose=True):
+def make_ddim_timesteps(ddim_discr_method, num_ddim_timesteps,
+                        num_ddpm_timesteps, verbose=True):
     if ddim_discr_method == 'uniform':
         c = num_ddpm_timesteps // num_ddim_timesteps
         ddim_timesteps = np.asarray(list(range(0, num_ddpm_timesteps, c)))
     elif ddim_discr_method == 'quad':
-        ddim_timesteps = ((np.linspace(0, np.sqrt(num_ddpm_timesteps * .8), num_ddim_timesteps)) ** 2).astype(int)
+        ddim_timesteps = ((np.linspace(0, np.sqrt(num_ddpm_timesteps * .8),
+                                        num_ddim_timesteps)) ** 2).astype(int)
     else:
-        raise NotImplementedError(f'There is no ddim discretization method called "{ddim_discr_method}"')
+        raise NotImplementedError(
+            f'There is no ddim discretization method called "{ddim_discr_method}"')
 
     # assert ddim_timesteps.shape[0] == num_ddim_timesteps
-    # add one to get the final alpha values right (the ones from first scale to data during sampling)
+    # add one to get the final alpha values right
+    # (the ones from first scale to data during sampling)
     steps_out = ddim_timesteps + 1
     if verbose:
         print(f'Selected timesteps for ddim sampler: {steps_out}')
@@ -48,7 +50,11 @@ def make_ddim_timesteps(ddim_discr_method, num_ddim_timesteps, num_ddpm_timestep
 
 def ddim_scheduler(model, steps, device='cuda'):
     sigs = []
-    ddim_timesteps = make_ddim_timesteps(ddim_discr_method="uniform", num_ddim_timesteps=steps, num_ddpm_timesteps=model.inner_model.inner_model.num_timesteps, verbose=False)
+    ddim_timesteps = make_ddim_timesteps(
+        ddim_discr_method="uniform",
+        num_ddim_timesteps=steps,
+        num_ddpm_timesteps=model.inner_model.inner_model.num_timesteps,
+        verbose=False)
     for x in range(len(ddim_timesteps) - 1, -1, -1):
         ts = ddim_timesteps[x]
         if ts > 999:
@@ -82,8 +88,12 @@ class Script(scripts.Script):
 # The returned values are passed to the run method as parameters.
 
     def ui(self, is_img2img):
-        upscale_method = gr.Dropdown(["nearest", "linear", "bilinear", "bicubic", "trilinear", "area", "nearest-exact"], label="Upscale method")
-        scheduler = gr.Dropdown(["simple", "normal", "karras", "exponential", "polyexponential", "ddim_uniform", "automatic"], label="Scheduler")
+        upscale_method = gr.Dropdown(["nearest", "linear", "bilinear", "bicubic",
+                                      "trilinear", "area", "nearest-exact"],
+                                      label="Upscale method")
+        scheduler = gr.Dropdown(["simple", "normal", "karras", "exponential",
+                                 "polyexponential", "ddim_uniform", "automatic"],
+                                 label="Scheduler")
         return [upscale_method, scheduler]
 
 
@@ -102,20 +112,38 @@ class Script(scripts.Script):
 
         # use custom schedulers: p.sampler_noise_scheduler_override
         def sampler_noise_scheduler_override(steps):
-            denoiser = k_diffusion.external.CompVisVDenoiser if p.sd_model.parameterization == "v" else k_diffusion.external.CompVisDenoiser
+            if p.sd_model.parameterization == "v":
+                denoiser = k_diffusion.external.CompVisVDenoiser
+            else:
+                denoiser = k_diffusion.external.CompVisDenoiser
             model_wrap = denoiser(p.sd_model, quantize=opts.enable_quantization)
 
             if scheduler == "karras":
-                sigma_min, sigma_max = (0.1, 10) if opts.use_old_karras_scheduler_sigmas else (model_wrap.sigmas[0].item(), model_wrap.sigmas[-1].item())
-                sigmas = k_diffusion.sampling.get_sigmas_karras(n=steps, sigma_min=sigma_min, sigma_max=sigma_max, device='cuda')
+                if opts.use_old_karras_scheduler_sigmas:
+                    sigma_min, sigma_max = (0.1, 10)
+                else:
+                    sigma_min, sigma_max = (model_wrap.sigmas[0].item(),
+                                            model_wrap.sigmas[-1].item())
+                sigmas = k_diffusion.sampling.get_sigmas_karras(
+                    n=steps, sigma_min=sigma_min, sigma_max=sigma_max, device='cuda')
             elif scheduler == "exponential":
-                m_sigma_min, m_sigma_max = (model_wrap.sigmas[0].item(), model_wrap.sigmas[-1].item())
-                sigma_min, sigma_max = (0.1, 10) if opts.use_old_karras_scheduler_sigmas else (m_sigma_min, m_sigma_max)
-                sigmas = k_diffusion.sampling.get_sigmas_exponential(n=steps, sigma_min=sigma_min, sigma_max=sigma_max, device='cuda')
+                m_sigma_min, m_sigma_max = (model_wrap.sigmas[0].item(),
+                                            model_wrap.sigmas[-1].item())
+                if opts.use_old_karras_scheduler_sigmas:
+                    sigma_min, sigma_max = (0.1, 10)
+                else:
+                    sigma_min, sigma_max = (m_sigma_min, m_sigma_max)
+                sigmas = k_diffusion.sampling.get_sigmas_exponential(
+                    n=steps, sigma_min=sigma_min, sigma_max=sigma_max, device='cuda')
             elif scheduler == "polyexponential":
-                m_sigma_min, m_sigma_max = (model_wrap.sigmas[0].item(), model_wrap.sigmas[-1].item())
-                sigma_min, sigma_max = (0.1, 10) if opts.use_old_karras_scheduler_sigmas else (m_sigma_min, m_sigma_max)
-                sigmas = k_diffusion.sampling.get_sigmas_polyexponential(n=steps, sigma_min=sigma_min, sigma_max=sigma_max, device='cuda')
+                m_sigma_min, m_sigma_max = (model_wrap.sigmas[0].item(),
+                                            model_wrap.sigmas[-1].item())
+                if opts.use_old_karras_scheduler_sigmas:
+                    sigma_min, sigma_max = (0.1, 10)
+                else:
+                    sigma_min, sigma_max = (m_sigma_min, m_sigma_max)
+                sigmas = k_diffusion.sampling.get_sigmas_polyexponential(
+                    n=steps, sigma_min=sigma_min, sigma_max=sigma_max, device='cuda')
             elif scheduler == "normal":
                 sigmas = model_wrap.get_sigmas(steps)
             elif scheduler == "simple":
@@ -130,7 +158,8 @@ class Script(scripts.Script):
 
         # override the sampler_noise_scheduler_override method
         # if the selected method is not recognized, use the default scheduler
-        if scheduler in ["simple", "normal", "karras", "exponential", "polyexponential", "ddim_uniform"]:
+        if scheduler in ["simple", "normal", "karras",
+                         "exponential", "polyexponential", "ddim_uniform"]:
             p.sampler_noise_scheduler_override = sampler_noise_scheduler_override
 
         # override the init method
@@ -166,24 +195,29 @@ class Script(scripts.Script):
                 if p.inpaint_full_res:
                     p.mask_for_overlay = image_mask
                     mask = image_mask.convert('L')
-                    crop_region = masking.get_crop_region(np.array(mask), p.inpaint_full_res_padding)
-                    crop_region = masking.expand_crop_region(crop_region, p.width, p.height, mask.width, mask.height)
+                    crop_region = masking.get_crop_region(np.array(mask),
+                                                          p.inpaint_full_res_padding)
+                    crop_region = masking.expand_crop_region(
+                        crop_region, p.width, p.height, mask.width, mask.height)
                     x1, y1, x2, y2 = crop_region
 
                     mask = mask.crop(crop_region)
                     image_mask = images.resize_image(2, mask, p.width, p.height)
                     p.paste_to = (x1, y1, x2-x1, y2-y1)
                 else:
-                    image_mask = images.resize_image(p.resize_mode, image_mask, p.width, p.height)
+                    image_mask = images.resize_image(p.resize_mode, image_mask,
+                                                     p.width, p.height)
                     np_mask = np.array(image_mask)
-                    np_mask = np.clip((np_mask.astype(np.float32)) * 2, 0, 255).astype(np.uint8)
+                    np_mask = np.clip((np_mask.astype(np.float32)) * 2, 0, 255
+                                      ).astype(np.uint8)
                     p.mask_for_overlay = Image.fromarray(np_mask)
 
                 p.overlay_images = []
 
             latent_mask = p.latent_mask if p.latent_mask is not None else image_mask
 
-            add_color_corrections = opts.img2img_color_correction and p.color_corrections is None
+            add_color_corrections = opts.img2img_color_correction \
+                                    and p.color_corrections is None
             if add_color_corrections:
                 p.color_corrections = []
             imgs = []
@@ -192,7 +226,9 @@ class Script(scripts.Script):
                 # Save init image
                 if opts.save_init_img:
                     p.init_img_hash = hashlib.md5(img.tobytes()).hexdigest()
-                    images.save_image(img, path=opts.outdir_init_images, basename=None, forced_filename=p.init_img_hash, save_to_dirs=False)
+                    images.save_image(img, path=opts.outdir_init_images,
+                                      basename=None, forced_filename=p.init_img_hash,
+                                      save_to_dirs=False)
 
                 image = images.flatten(img, opts.img2img_background_color)
 
@@ -201,7 +237,9 @@ class Script(scripts.Script):
 
                 if image_mask is not None:
                     image_masked = Image.new('RGBa', (image.width, image.height))
-                    image_masked.paste(image.convert("RGBA").convert("RGBa"), mask=ImageOps.invert(p.mask_for_overlay.convert('L')))
+                    image_masked.paste(
+                        image.convert("RGBA").convert("RGBa"),
+                        mask=ImageOps.invert(p.mask_for_overlay.convert('L')))
 
                     p.overlay_images.append(image_masked.convert('RGBA'))
 
@@ -223,7 +261,8 @@ class Script(scripts.Script):
                 imgs.append(image)
 
             if len(imgs) == 1:
-                batch_images = np.expand_dims(imgs[0], axis=0).repeat(p.batch_size, axis=0)
+                batch_images = np.expand_dims(imgs[0], axis=0).repeat(p.batch_size,
+                                                                      axis=0)
                 if p.overlay_images is not None:
                     p.overlay_images = p.overlay_images * p.batch_size
 
@@ -234,38 +273,51 @@ class Script(scripts.Script):
                 p.batch_size = len(imgs)
                 batch_images = np.array(imgs)
             else:
-                raise RuntimeError(f"bad number of images passed: {len(imgs)}; expecting {p.batch_size} or less")
+                raise RuntimeError(
+                    f"bad number of images passed: {len(imgs)}; "
+                    f"expecting {p.batch_size} or less")
 
             image = torch.from_numpy(batch_images)
             image = 2. * image - 1.
             image = image.to(shared.device)
 
-            p.init_latent = p.sd_model.get_first_stage_encoding(p.sd_model.encode_first_stage(image))
+            p.init_latent = p.sd_model.get_first_stage_encoding(
+                p.sd_model.encode_first_stage(image))
 
             if p.resize_mode == 3:
                 # -------------------------------------------
                 # modified code: pass in the upscale method
                 # -------------------------------------------
-                p.init_latent = torch.nn.functional.interpolate(p.init_latent, size=(p.height // opt_f, p.width // opt_f), mode=p.upscale_method)
+                p.init_latent = torch.nn.functional.interpolate(
+                    p.init_latent,
+                    size=(p.height // opt_f, p.width // opt_f),
+                    mode=p.upscale_method)
 
             if image_mask is not None:
                 init_mask = latent_mask
-                latmask = init_mask.convert('RGB').resize((p.init_latent.shape[3], p.init_latent.shape[2]))
+                latmask = init_mask.convert('RGB').resize(
+                    (p.init_latent.shape[3], p.init_latent.shape[2]))
                 latmask = np.moveaxis(np.array(latmask, dtype=np.float32), 2, 0) / 255
                 latmask = latmask[0]
                 latmask = np.around(latmask)
                 latmask = np.tile(latmask[None], (4, 1, 1))
 
-                p.mask = torch.asarray(1.0 - latmask).to(shared.device).type(p.sd_model.dtype)
-                p.nmask = torch.asarray(latmask).to(shared.device).type(p.sd_model.dtype)
+                p.mask = torch.asarray(1.0 - latmask).to(shared.device).type(
+                    p.sd_model.dtype)
+                p.nmask = torch.asarray(latmask).to(shared.device).type(
+                    p.sd_model.dtype)
 
-                # this needs to be fixed to be done in sample() using actual seeds for batches
+                # this needs to be fixed to be done in sample()
+                # using actual seeds for batches
                 if p.inpainting_fill == 2:
-                    p.init_latent = p.init_latent * p.mask + create_random_tensors(p.init_latent.shape[1:], all_seeds[0:p.init_latent.shape[0]]) * p.nmask
+                    p.init_latent = p.init_latent * p.mask + create_random_tensors(
+                        p.init_latent.shape[1:],
+                        all_seeds[0:p.init_latent.shape[0]]) * p.nmask
                 elif p.inpainting_fill == 3:
                     p.init_latent = p.init_latent * p.mask
 
-            p.image_conditioning = p.img2img_image_conditioning(image, p.init_latent, image_mask)
+            p.image_conditioning = p.img2img_image_conditioning(
+                image, p.init_latent, image_mask)
             print("new init executed")
 
         p.init = init

@@ -16,12 +16,12 @@ opt_f = 8
 
 
 def parse_upscale_method(upscale_method):
-    if upscale_method in ("bilinear-antialiases", "bicubic-antialiased"):
+    if upscale_method in ("bilinear-antialiased", "bicubic-antialiased"):
         upscale_method = upscale_method.split('-')[0]
-        antialiased = True
+        antialias = True
     else:
-        antialiased = False
-    return upscale_method, antialiased
+        antialias = False
+    return upscale_method, antialias
 
 
 def init(p, upscale_method, all_prompts, all_seeds, all_subseeds, **kwargs):
@@ -150,12 +150,12 @@ def init(p, upscale_method, all_prompts, all_seeds, all_subseeds, **kwargs):
         # -------------------------------------------
         # modified code: pass in the upscale method
         # -------------------------------------------
-        upscale_method, antialiased = parse_upscale_method(upscale_method)
+        upscale_method, antialias = parse_upscale_method(upscale_method)
         p.init_latent = torch.nn.functional.interpolate(
             p.init_latent,
             size=(p.height // opt_f, p.width // opt_f),
             mode=upscale_method,
-            antialiased=antialiased)
+            antialias=antialias)
 
     if image_mask is not None:
         init_mask = latent_mask

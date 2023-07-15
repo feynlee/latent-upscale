@@ -93,4 +93,5 @@ def sampler_noise_scheduler_override(p, scheduler, steps):
         print("error invalid scheduler", scheduler)
 
     print(f"sigmas device: {sigmas.device}")
+    print(f"sigmas: {sigmas}")
     return sigmas

@@ -39,7 +39,7 @@ class Script(scripts.Script):
                                           "area", "nearest",  "nearest-exact"],
                                         label="Upscale method")
             scheduler = gr.Dropdown(["simple", "normal", "karras", "exponential",
-                                    "polyexponential", "ddim_uniform", "automatic"],
+                                    "polyexponential", "automatic"],
                                     label="Scheduler")
         return [upscale_method, scheduler]
 

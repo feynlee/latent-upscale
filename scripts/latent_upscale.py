@@ -60,7 +60,9 @@ class Script(scripts.Script):
         # if the selected method is not recognized, use the default scheduler
         if scheduler in ["simple", "normal", "karras",
                          "exponential", "polyexponential", "ddim_uniform"]:
-            p.sampler_noise_scheduler_override = lambda steps: sampler_noise_scheduler_override(p, scheduler, steps)
+            p.sampler_noise_scheduler_override \
+                = lambda steps: sampler_noise_scheduler_override(p, scheduler, steps)
 
         # override the init method
-        p.init = lambda all_prompts, all_seeds, all_subseeds, **kwargs: init(p, upscale_method, all_prompts, all_seeds, all_subseeds, **kwargs)
+        p.init = lambda all_prompts, all_seeds, all_subseeds, **kwargs: init(
+            p, upscale_method, all_prompts, all_seeds, all_subseeds, **kwargs)

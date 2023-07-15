@@ -12,8 +12,7 @@ Enhance the latent upscale options in the img2img process in [Automatic1111](htt
 This plugin introduces alternative interpolation methods for upscaling and offers different schedulers for the diffusion process, resulting in superior upscaled images.
 Moreover, this plugin expands the upscale options available in the Latent Space, surpassing those offered by the "Hires Fix" for the txt2img process.
 
-
-## Exmaple Comparison
+## Example Comparison
 
 Original Image:
 

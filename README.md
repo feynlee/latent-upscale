@@ -14,6 +14,7 @@ Moreover, this plugin expands the upscale options available in the Latent Space,
 ## Exmaple Comparison
 
 Original Image:
+
 ![](assets/original.png)
 
 The default latent upscale (choose Resize mode "latent upscale"):

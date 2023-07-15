@@ -26,7 +26,7 @@ Latent Upscale Plugin (Upscale method: "nearest-exact", Scheduler: "normal")
 
 ## Installation
 
-To install this plugin, navigate to **Extensions** -> **Install from URL** within the WebUI, and then paste the following URL: https://github.com/feynlee/latent_upscale
+To install this plugin, navigate to **Extensions** -> **Install from URL** within the WebUI, and then paste this repo's URL: https://github.com/feynlee/latent-upscale
 
 ![](assets/installation.png)
 

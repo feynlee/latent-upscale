@@ -24,7 +24,6 @@ The default latent upscale (choose Resize mode "latent upscale"):
 Latent Upscale Plugin (Upscale method: "nearest-exact", Scheduler: "normal")
 ![](assets/nearest-exact-normal2.png)
 
-
 ## Installation
 
 To install this plugin, navigate to **Extensions** -> **Install from URL** within the WebUI, and then paste this repo's URL: https://github.com/feynlee/latent-upscale

@@ -36,6 +36,8 @@ Then go back to **Installed** and click on **Apply**.
 
 ## Usage
 
+![](assets/usage.png)
+
 At the bottom of the **img2img** tab, you can select the newly installed **Latent Upscale** script in the **Script** dropdown menu.
 
 To benefit from these enhancements, make sure you have the "Just resize (latent upscale)" option selected for **Resize mode**.

@@ -21,8 +21,8 @@ Original Image:
 The default latent upscale (choose Resize mode "latent upscale"):
 ![](assets/default.png)
 
-Latent Upscale Plugin (Upscale method: "nearest-exact", Scheduler: "normal")
-![](assets/nearest-exact-normal2.png)
+Latent Upscale Plugin (Upscale method: "nearest-exact", Scheduler: "simple")
+![](assets/nearest-exact-simple8.png)
 
 ## Installation
 

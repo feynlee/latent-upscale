@@ -55,7 +55,7 @@ Additionally, all the parameters present in the user interface remain applicable
 
 ### How Latent Upscale Works
 
-The original image is first encoded into the latent space, which is upscaled by the correct factor before fed into the diffusion (de-noising) process, and then decoded to the upscaled image.
+The original image is first encoded into the latent space, which is upscaled by the correct factor before being fed into the diffusion (de-noising) process, and then decoded to the upscaled image.
 
 ![](assets/img2img_latent_upscale_process.png)
 

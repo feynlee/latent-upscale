@@ -59,7 +59,7 @@ The original image is first encoded into the latent space, which is upscaled by 
 
 ![](assets/img2img_latent_upscale_process.png)
 
-### Problems with Automatic1111's Default Implementation
+### Automatic1111's Default Implementation
 
 There are two problems with the default implementation of the latent upscale process in Automatic111:
 

@@ -76,13 +76,14 @@ It does not provide users with other options to choose from.
 
    1. It adds the option to choose the "Upscale Method" interpolation method when creating the latent image.
 
-   2. I turned on a fix that’s already in the code base but for some reason not applied by default:
+   2. I turned on a fix that’s already in the code base:
 
        ```python
        opts.img2img_fix_steps = True
        ```
 
-      This ensures that the diffusion process runs for the correct number of steps, as specified by the user, by setting opts.img2img_fix_steps = True. It is unclear why this was not the default setting for img2img.
+      This ensures that the diffusion process runs for the correct number of steps, as specified by the user.
+      It is unclear why this was not the default setting for img2img.
 
       ![](assets/fixed-sigmas.png)
 

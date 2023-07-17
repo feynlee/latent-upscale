@@ -59,7 +59,7 @@ class Script(scripts.Script):
         # override the sampler_noise_scheduler_override method
         # if the selected method is not recognized, use the default scheduler
         if scheduler in ["simple", "normal", "karras",
-                         "exponential", "polyexponential", "ddim_uniform"]:
+                         "exponential", "polyexponential"]:
             p.sampler_noise_scheduler_override \
                 = lambda steps: sampler_noise_scheduler_override(p, scheduler, steps)
 

@@ -6,7 +6,7 @@ Enhance the latent upscale options in the img2img process in [Automatic1111](htt
 
 ## Motivation
 
-1. The current img2img process lacks the ability to select the "Hires Fix" latent upscale options.
+1. The current img2img process lacks the ability to select different options for Latent Upscale.
 2. The default latent upscale method ("bilinear") often produces blurry images.
 
 This plugin introduces alternative interpolation methods for upscaling and offers different schedulers for the diffusion process, resulting in superior upscaled images.

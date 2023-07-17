@@ -53,9 +53,37 @@ Additionally, all the parameters present in the user interface remain applicable
 
 ## Technical Details
 
+### How Latent Upscale Works
+
+The original image is first encoded into the latent space, which is upscaled by the correct factor before fed into the diffusion (de-noising) process, and then decoded to the upscaled image.
+
+![](assets/img2img_latent_upscale_process.png)
+
+### Problems with Automatic1111's Default Implementation
+
+There are two problems with the default implementation of the latent upscale process in Automatic111:
+
+1. It uses the [“bilinear” method](https://en.wikipedia.org/wiki/Bilinear_interpolation), which often results in blurry upscaled images.
+It does not provide users with other options to choose from.
+
+2. The number of steps users set was applied to the full scheduler, effectively reducing the steps for “de-noising”.
+  For example, if the user sets the steps to be "30" and the de-noise strength is set to 0.4, the diffusion process will only run for 30*0.4 = 12 steps.
+  ![](assets/default-sigmas.png)
+
+### Improved Implementation
+
 1. This plugin overrides the default `init` method for `StableDiffusionProcessingImg2Img` to include additional features:
 
    1. It adds the option to choose the "Upscale Method" interpolation method when creating the latent image.
-   2. It ensures that the diffusion process runs for the correct number of steps, as specified by the user, by setting opts.img2img_fix_steps = True. It is unclear why this was not the default setting for img2img.
+
+   2. I turned on a fix that’s already in the code base but for some reason not applied by default:
+
+       ```python
+       opts.img2img_fix_steps = True
+       ```
+
+      This ensures that the diffusion process runs for the correct number of steps, as specified by the user, by setting opts.img2img_fix_steps = True. It is unclear why this was not the default setting for img2img.
+
+      ![](assets/fixed-sigmas.png)
 
 2. This plugin assigns the `sampler_noise_scheduler_override` method for `StableDiffusionProcessingImg2Img` so that our custom schedulers can be used for the diffusion process.
